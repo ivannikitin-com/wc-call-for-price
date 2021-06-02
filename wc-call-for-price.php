@@ -2,14 +2,14 @@
 
 /**
  * Plugin Name: Woocommerce Call for Price
- * Description: !!!Add a Call For Price button on single product page. A call form appears on click.
+ * Description: Add a Call For Price button on single product page. A call form appears on click.
  * Version: 1.0.0
  * Author: Иван Никитин и партнеры
  * Author URI: https://ivannikitin.com/
  * Text Domain: wc-call-for-price
  * Domain Path: /languages
  * License:           GPL-3.0
- * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
+ * License URI:       http://www.gnu.org/licenses/gpl-3.0.txt
  * GitHub Plugin URI: https://github.com/ivannikitin-com/wc-call-for-price
  * GitHub Branch:     master
  * Requires WP:       5.0
@@ -52,9 +52,15 @@ class WCCallForPrice {
 		add_action( 'woocommerce_single_product_summary', array($this, 'call_for_price_output'), 30 );
 		add_filter( 'woocommerce_empty_price_html', array($this, 'button_replace_price'), 1, 2 );
 		add_action( 'wp_enqueue_scripts', array($this,'plugin_scripts_and_styles'),10  );
-		add_action( 'wp_enqueue_scripts', array($this,'cfp_ajax_data'), 1999  );
+		//add_action( 'wp_enqueue_scripts', array($this,'cfp_ajax_data'), 1999  );
 		add_action( 'wp_ajax_get_product_price', array($this, 'get_product_price_callback' ) );
-		add_action( 'wp_ajax_nopriv_get_product_price', array($this, 'get_product_price_callback' ) );		
+		add_action( 'wp_ajax_nopriv_get_product_price', array($this, 'get_product_price_callback' ) );
+		add_filter( 'wpcf7_form_elements', 'do_shortcode' );
+		add_shortcode('product_title', array($this, 'product_title_in_form'));
+		add_shortcode('product_sku', array($this, 'product_sku_in_form'));
+		add_action( 'wpcf7_init', array($this, 'add_custom_shortcods' ));
+		add_filter('wpcf7_mail_components', array($this, 'product_title_in_form' ), 10, 3);
+		add_shortcode( 'CF7_get_product_id', array($this, 'CF7_get_post_id_shortcode_function' ) );		
 	}
 
 	public function check_woocommerce() {
@@ -202,15 +208,15 @@ class WCCallForPrice {
 	 * @access  public
 	 */
 	public function plugin_scripts_and_styles() {
-		wp_localize_script( 'wc-call-for-price-js', 'cfpajax', 
+	
+		wp_enqueue_script( 'wc_call_for_price-js', plugins_url( '/js/wc-call-for-price.js' , __FILE__ ), array( 'jquery'), WCCFP_VERSION, true );
+		wp_enqueue_style( 'wc-call-for-price_admin_styles', plugins_url('admin-styles.css', __FILE__) );
+		wp_enqueue_style( 'wc-call-for-price_styles', plugins_url('style.css', __FILE__) );
+ 		wp_localize_script( 'wc_call_for_price-js', 'cfpajax', 
 			array(
 				'url' => admin_url('admin-ajax.php')
 			)
-		);		
-		wp_enqueue_script( 'wc_call_for_price-js', plugins_url( '/js/wc-call-for-price.js' , __FILE__ ), array( 'jquery'), WCCFP_VERSION, true );
-		wp_enqueue_style( 'wc-call-for-price_admin_styles', plugins_url('admin-styles.css', __FILE__) );
-		wp_enqueue_style( 'wc-call-for-price_styles', plugins_url('styles.css', __FILE__) );
- 
+		);
 
     }
 
@@ -275,6 +281,24 @@ class WCCallForPrice {
 			echo $result;
 			wp_die();
 	}	
+	/*A Shortcode for CF7 Dynamic Text Extention */
+	public function CF7_get_post_id_shortcode_function(){
+		global $product;
+	  	return get_the_id();
+	}
+
+	public function product_title_in_form(){
+		return get_the_title();
+	}
+
+	public function product_sku_in_form(){
+		global $product;
+		return $product->get_sku();
+	}
+	public function add_custom_shortcods(){
+		wpcf7_add_shortcode( 'product_title', array( $this,'product_title_in_form' ));
+		wpcf7_add_shortcode( 'product_sku', array( $this,'product_sku_in_form' ));
+	}
 }
 
 $WCCallForPrice = new WCCallForPrice();
