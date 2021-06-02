@@ -52,14 +52,11 @@ class WCCallForPrice {
 		add_action( 'woocommerce_single_product_summary', array($this, 'call_for_price_output'), 30 );
 		add_filter( 'woocommerce_empty_price_html', array($this, 'button_replace_price'), 1, 2 );
 		add_action( 'wp_enqueue_scripts', array($this,'plugin_scripts_and_styles'),10  );
-		//add_action( 'wp_enqueue_scripts', array($this,'cfp_ajax_data'), 1999  );
 		add_action( 'wp_ajax_get_product_price', array($this, 'get_product_price_callback' ) );
 		add_action( 'wp_ajax_nopriv_get_product_price', array($this, 'get_product_price_callback' ) );
-		add_filter( 'wpcf7_form_elements', 'do_shortcode' );
 		add_shortcode('product_title', array($this, 'product_title_in_form'));
 		add_shortcode('product_sku', array($this, 'product_sku_in_form'));
 		add_action( 'wpcf7_init', array($this, 'add_custom_shortcods' ));
-		add_filter('wpcf7_mail_components', array($this, 'product_title_in_form' ), 10, 3);
 		add_shortcode( 'CF7_get_product_id', array($this, 'CF7_get_post_id_shortcode_function' ) );		
 	}
 
@@ -293,7 +290,11 @@ class WCCallForPrice {
 
 	public function product_sku_in_form(){
 		global $product;
-		return $product->get_sku();
+		if ($product) {
+			return $product->get_sku();
+		} else {
+			return "";
+		}
 	}
 	public function add_custom_shortcods(){
 		wpcf7_add_shortcode( 'product_title', array( $this,'product_title_in_form' ));
