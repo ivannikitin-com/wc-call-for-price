@@ -2,13 +2,13 @@
 
 /**
  * Plugin Name: Woocommerce Call for Price
- * Description: Add a Call For Price button on single product page. A call form appears on click.
+ * Description: !!!Add a Call For Price button on single product page. A call form appears on click.
  * Version: 1.0.0
  * Author: Иван Никитин и партнеры
  * Author URI: https://ivannikitin.com/
  * Text Domain: wc-call-for-price
  * Domain Path: /languages
- * License:           GPL-2.0+
+ * License:           GPL-3.0
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * GitHub Plugin URI: https://github.com/ivannikitin-com/wc-call-for-price
  * GitHub Branch:     master
