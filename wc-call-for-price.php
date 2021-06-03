@@ -44,7 +44,6 @@ class WCCallForPrice {
 			add_action( 'woocommerce_settings_tabs_wc_call_for_price', array( $this, 'settings_tab' ) );
 			add_action( 'woocommerce_update_options_wc_call_for_price', array( $this, 'update_settings' ) );
 			add_filter( "plugin_action_links_$plugin", array( $this, 'plugin_add_settings_link' ) );			
-			add_action( 'init', array( $this, 'reactivate_action'), 9999 );
 			add_action( 'init', array( $this, 'load_plugin_textdomain') );
 			register_activation_hook( __FILE__, array( 'WCCallForPrice', 'install' ) );
 			register_uninstall_hook( __FILE__, array( 'WCCallForPrice', 'uninstall' ) );
@@ -52,14 +51,20 @@ class WCCallForPrice {
 		add_action( 'woocommerce_single_product_summary', array($this, 'call_for_price_output'), 30 );
 		add_filter( 'woocommerce_empty_price_html', array($this, 'button_replace_price'), 1, 2 );
 		add_action( 'wp_enqueue_scripts', array($this,'plugin_scripts_and_styles'),10  );
-		add_action( 'wp_ajax_get_product_price', array($this, 'get_product_price_callback' ) );
-		add_action( 'wp_ajax_nopriv_get_product_price', array($this, 'get_product_price_callback' ) );
+		add_action( 'wp_ajax_get_product_info', array($this, 'get_product_info' ) );
+		add_action( 'wp_ajax_nopriv_get_product_info', array($this, 'get_product_info' ) );
 		add_shortcode('product_title', array($this, 'product_title_in_form'));
 		add_shortcode('product_sku', array($this, 'product_sku_in_form'));
 		add_action( 'wpcf7_init', array($this, 'add_custom_shortcods' ));
 		add_shortcode( 'CF7_get_product_id', array($this, 'CF7_get_post_id_shortcode_function' ) );		
 	}
 
+	/**
+	 * Error message if woocommerce plugin is not activated
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function check_woocommerce() {
 		if ( $this->is_woocommerce_activated() === false ) {
 			$error = sprintf( __( 'WC Call For Price requires %sWooCommerce%s to be installed & activated!' , 'wc-call-for-price' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>' );
@@ -69,6 +74,12 @@ class WCCallForPrice {
 		}
 	}
 
+	/**
+	 * Check if woocommerce plugin is activated
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function is_woocommerce_activated() {
 		$blog_plugins = get_option( 'active_plugins', array() );
 		$site_plugins = is_multisite() ? (array) maybe_unserialize( get_site_option('active_sitewide_plugins' ) ) : array();
@@ -92,7 +103,9 @@ class WCCallForPrice {
 	}
 
 	/**
-	 * @ince    1.0.0
+	 * Output settings fields on settings tab
+	 * 
+	 * @since    1.0.0
 	 * @access  public
 	 */
 	public  function settings_tab() {
@@ -146,6 +159,8 @@ class WCCallForPrice {
 	}
 
 	/**
+	 * Update settings for this plugin
+	 * 
 	 * @since    1.0.0
 	 * @access  public
 	 */
@@ -169,17 +184,7 @@ class WCCallForPrice {
 	}
 
 	/**
-	 * Reactivate the reorder link in order details
-	 *
-	 * @since    1.0.0
-	 * @access  public
-	 */
-	public function reactivate_action() {
-
-	}
-
-	/**
-	 * Setup Database on activating the plugin
+	 * Setup something on activating the plugin (for future need)
 	 *
 	 * @since    1.0.0
 	 * @access  public
@@ -189,7 +194,7 @@ class WCCallForPrice {
 	}
 
 	/**
-	 * Cleanup Database on deleting the plugin
+	 * Cleanup something on deleting the plugin  (for future need)
 	 *
 	 * @since    1.0.0
 	 * @access  public
@@ -200,6 +205,7 @@ class WCCallForPrice {
 
 
 	/**
+	 * Enqueue plugin's scripts & styles, define ajax url
 	 *
 	 * @since    1.1.0
 	 * @access  public
@@ -217,6 +223,12 @@ class WCCallForPrice {
 
     }
 
+	/**
+	 * Enqueue plugin's styles for admin area
+	 *
+	 * @since    1.1.0
+	 * @access  public
+	 */    
     public function admin_scripts_and_styles() {
 		wp_enqueue_style( 'wc-call-for-price_admin_styles', plugins_url('admin-styles.css', __FILE__) ); 
     }
@@ -234,6 +246,12 @@ class WCCallForPrice {
 		return $links;
 	}
 
+	/**
+	 * Add a link to call a modal call form
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function call_for_price_output(){
 		global $product;
 		$call_for_price_form_id = get_option('call_for_price_form');
@@ -242,6 +260,12 @@ class WCCallForPrice {
 		}
 	}
 
+	/**
+	 * Replace a null price message and output a modal call form layout
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function button_replace_price($price, $_product) {
 		$call_for_price_form_id = get_option('call_for_price_form');
 		if ($_product->get_price() == 0 && $call_for_price_form_id) {
@@ -263,31 +287,52 @@ class WCCallForPrice {
 		return $price;
 	}	
 
-	public function get_product_price_callback(){
+	/**
+	 * Get product title and SKU by product id
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
+	public function get_product_info(){
 			if (!isset($_POST['product_id']) || empty($_POST['product_id'])) {
 				echo '';
 				wp_die();
 			}
-
-			$result['product_price'] = get_post_meta($_POST['product_id'],'_price',true).' '.get_woocommerce_currency_symbol();
-			$result['product_quantity'] = (isset($_POST['quantity']))?$_POST['quantity']:'';
 			$result['product_sku'] = get_post_meta($_POST['product_id'],'_sku',true);
 			$product_post = get_post($_POST['product_id']);
 			$result['product_title'] = $product_post->post_title;
 			$result = json_encode($result);
 			echo $result;
 			wp_die();
-	}	
-	/*A Shortcode for CF7 Dynamic Text Extention */
+	}
+
+	/**
+	 * Get product id for CF7 shortcode
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function CF7_get_post_id_shortcode_function(){
 		global $product;
 	  	return get_the_id();
 	}
 
+	/**
+	 * Get product title for CF7 shortcode
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function product_title_in_form(){
 		return get_the_title();
 	}
 
+	/**
+	 * Get product SKU for CF7 shortcode
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function product_sku_in_form(){
 		global $product;
 		if ($product) {
@@ -296,6 +341,13 @@ class WCCallForPrice {
 			return "";
 		}
 	}
+	
+	/**
+	 * Add additional shortcodes for CF7
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
 	public function add_custom_shortcods(){
 		wpcf7_add_shortcode( 'product_title', array( $this,'product_title_in_form' ));
 		wpcf7_add_shortcode( 'product_sku', array( $this,'product_sku_in_form' ));
