@@ -57,7 +57,8 @@ class WCCallForPrice {
 		add_shortcode('product_title', array($this, 'product_title_in_form'));
 		add_shortcode('product_sku', array($this, 'product_sku_in_form'));
 		add_action( 'wpcf7_init', array($this, 'add_custom_shortcods' ));
-		add_shortcode( 'CF7_get_product_id', array($this, 'CF7_get_post_id_shortcode_function' ) );		
+		add_shortcode( 'CF7_get_product_id', array($this, 'CF7_get_post_id_shortcode_function' ) );
+		add_shortcode( 'CF7_get_product_sku', array($this, 'product_sku_in_form' ) );
 	}
 
 	/**
