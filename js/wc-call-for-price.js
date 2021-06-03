@@ -17,7 +17,7 @@ jQuery( function( $ ) {
 				success:function(response){
 					//Заполняем скрытые поля формы для формирования тела письма
 					$('form#callforpriceform input[name="product-variation"]').val(response['product_title']);
-					$('form#callforpriceform input[name="product-sku"]').val(response['product_sku']);
+					//$('form#callforpriceform input[name="product-sku"]').val(response['product_sku']);
 					//Формируем строку о запросе для всплывающего окна
 					/*$('#modalCallForPrice div.wpcf7 .order_product_title').html(response['product_title']);
 					$('#modalCallForPrice .sku_wrapper .sku').html(response['product_sku']);*/
