@@ -50,6 +50,7 @@ class WCCallForPrice {
 		}
 		add_action( 'woocommerce_single_product_summary', array($this, 'call_for_price_output'), 30 );
 		add_filter( 'woocommerce_empty_price_html', array($this, 'button_replace_price'), 1, 2 );
+		add_filter( 'woocommerce_variable_empty_price_html', array($this, 'button_replace_price'), 1, 2 );
 		add_action( 'wp_enqueue_scripts', array($this,'plugin_scripts_and_styles'),10  );
 		add_action( 'wp_ajax_get_product_info', array($this, 'get_product_info' ) );
 		add_action( 'wp_ajax_nopriv_get_product_info', array($this, 'get_product_info' ) );
