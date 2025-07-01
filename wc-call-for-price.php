@@ -37,7 +37,7 @@ class WCCallForPrice {
 	 */
 	public function __construct() {
 		$plugin = plugin_basename( __FILE__ );
-		add_action( 'plugins_loaded', array( $this, 'check_woocommerce' ), 9 );
+		add_action( 'plugins_loaded', array( $this, 'check_dependencies' ), 9 );
 		if( is_admin() ) {
 			add_action( 'admin_enqueue_scripts', array($this, 'admin_scripts_and_styles' ) );
 			add_filter( 'woocommerce_settings_tabs_array', array( $this, 'add_settings_tab' ), 50 );
@@ -67,17 +67,29 @@ class WCCallForPrice {
 	 * @since    1.0.0
 	 * @access  public
 	 */
-	public function check_woocommerce() {
+	public function check_dependencies() {
 		if ( $this->is_woocommerce_activated() === false ) {
 			$error = sprintf( __( 'WC Call For Price requires %sWooCommerce%s to be installed & activated!' , 'wc-call-for-price' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>' );
 			$message = '<div class="error"><p>' . $error . '</p></div>';
 			echo $message;
 			return;
 		}
+		if ( $this->is_CF7_activated() === false ) {
+			$error = sprintf( __( 'WC Call For Price requires %sContact Form 7%s to be installed & activated!' , 'wc-call-for-price' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>' );
+			$message = '<div class="error"><p>' . $error . '</p></div>';
+			echo $message;
+			return;
+		}
+		if ( $this->is_CF7_dynamic_text_extension_activated() === false ) {
+			$error = sprintf( __( 'WC Call For Price requires %sContact Form 7 - Dynamic Text Extension%s to be installed & activated!' , 'wc-call-for-price' ), '<a href="http://wordpress.org/extend/plugins/woocommerce/">', '</a>' );
+			$message = '<div class="error"><p>' . $error . '</p></div>';
+			echo $message;
+			return;
+		}				
 	}
 
 	/**
-	 * Check if woocommerce plugin is activated
+	 * Check if Woocommerce plugin is activated
 	 *
 	 * @since    1.0.0
 	 * @access  public
@@ -92,6 +104,40 @@ class WCCallForPrice {
 			return false;
 		}
 	}
+
+	/**
+	 * Check if CF7 plugin is activated
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
+	public function is_CF7_activated() {
+		$blog_plugins = get_option( 'active_plugins', array() );
+		$site_plugins = is_multisite() ? (array) maybe_unserialize( get_site_option('active_sitewide_plugins' ) ) : array();
+
+		if ( in_array( 'contact-form-7/wp-contact-form-7.php', $blog_plugins ) || isset( $site_plugins['contact-form-7/wp-contact-form-7.php'] ) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Check if CF7 dynamic text extension plugin is activated
+	 *
+	 * @since    1.0.0
+	 * @access  public
+	 */
+	public function is_CF7_dynamic_text_extension_activated() {
+		$blog_plugins = get_option( 'active_plugins', array() );
+		$site_plugins = is_multisite() ? (array) maybe_unserialize( get_site_option('active_sitewide_plugins' ) ) : array();
+
+		if ( in_array( 'contact-form-7-dynamic-text-extension/contact-form-7-dynamic-text-extension.php', $blog_plugins ) || isset( $site_plugins['contact-form-7-dynamic-text-extension/contact-form-7-dynamic-text-extension.php'] ) ) {
+			return true;
+		} else {
+			return false;
+		}
+	}		
 
 	/**
 	 * Add a new settings tab to woocommerce/settings
@@ -258,7 +304,7 @@ class WCCallForPrice {
 		global $product;
 		$call_for_price_form_id = get_option('call_for_price_form');
 		if ($product->get_price() == 0 && $call_for_price_form_id) {
-			echo '<div id="call_for_price"><a href="#modalCallForPrice" class="button btn_brd_light-blue-green callforprice" data-toggle="modal">'.__('Запросить цену','wc-call-for-price').'</a></div>';
+			echo '<span><a href="#modalCallForPrice" class="button btn_brd_light-blue-green callforprice" data-toggle="modal">'.__('Запросить цену','wc-call-for-price').'</a></span>';
 		}
 	}
 
@@ -269,17 +315,17 @@ class WCCallForPrice {
 	 * @access  public
 	 */
 	public function button_replace_price($price, $_product) {
-		// Если это админка, то возвращаем цену без изменений
 		if (is_admin()) {
 			return __('Цена по запросу','wc-call-for-price');
+		}		if (is_admin()) {
+			return __('Цена по запросу','wc-call-for-price');
 		}
-
 		$call_for_price_form_id = get_option('call_for_price_form');
 		if ($_product->get_price() == 0 && $call_for_price_form_id) {
 			return __('
 
 <p class="price"><span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">Цена по запросу</span></bdi></span></p>
-<div id="modalCallForPrice" class="modal fade" aria-labelledby="myModalLabel" aria-hidden="true">
+<div id="modalCallForPrice" class="modal hide fade" aria-labelledby="myModalLabel" aria-hidden="true">
 		<div class="modal-dialog">
 			<div class="modal-content">
 				<div class="modal-header"><div class="form_title">Запрос цены на товар</div><button class="close" type="button" data-dismiss="modal">×</button></div><!--/.modal-header-->
@@ -356,8 +402,10 @@ class WCCallForPrice {
 	 * @access  public
 	 */
 	public function add_custom_shortcods(){
-		wpcf7_add_shortcode( 'product_title', array( $this,'product_title_in_form' ));
-		wpcf7_add_shortcode( 'product_sku', array( $this,'product_sku_in_form' ));
+		wpcf7_add_shortcode( array('product_title'), array( $this,'product_title_in_form' ), true);
+		wpcf7_add_form_tag(array('product_title'), array( $this,'product_title_in_form' ), true);
+		wpcf7_add_form_tag( 'product_sku', array( $this,'product_sku_in_form' ));
+		wpcf7_add_form_tag( 'product_sku', array( $this,'product_sku_in_form' ));
 	}
 }
 
