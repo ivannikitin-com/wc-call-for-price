@@ -53,6 +53,8 @@ jQuery( function( $ ) {
 				$('form#callforpriceform input[name="product-id"]').val(features['product_id']);
 				$('form#callforpriceform input[name="product-sku"]').val(features['product_sku']);
 				$('form#callforpriceform input[name="product-url"]').val(features['product_url']);
+				// Присваиванием скрытому полю checker значение текущего времени в миллисекундах
+				$('form#callforpriceform input[name="checker"]').val(new Date().getTime());
 				//Формируем строку о заказе для всплывающего окна
 				var order_text = features['product_title'];
 				$('#modalCallForPrice div.wpcf7 .order_product_title').html(order_text);
