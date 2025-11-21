@@ -304,7 +304,7 @@ class WCCallForPrice {
 		global $product;
 		$call_for_price_form_id = get_option('call_for_price_form');
 		if ($product->get_price() == 0 && $call_for_price_form_id) {
-			echo '<span><a href="#modalCallForPrice" class="button btn_brd_light-blue-green callforprice" data-toggle="modal">'.__('Запросить цену','wc-call-for-price').'</a></span>';
+			echo '<span class="price_request_wrap"><a href="#modalCallForPrice" class="button btn_brd_light-blue-green callforprice" data-toggle="modal">'.__('Запросить цену','wc-call-for-price').'</a></span>';
 		}
 	}
 
@@ -347,16 +347,27 @@ class WCCallForPrice {
 	 * @access  public
 	 */
 	public function get_product_info(){
-			if (!isset($_POST['product_id']) || empty($_POST['product_id'])) {
+		if ((!isset($_POST['product_id']) || empty($_POST['product_id'])) && (!isset($_POST['product_sku']) || empty($_POST['product_sku']))) {
 				echo '';
 				wp_die();
-			}
-			$result['product_sku'] = get_post_meta($_POST['product_id'],'_sku',true);
-			$product_post = get_post($_POST['product_id']);
-			$result['product_title'] = $product_post->post_title;
-			$result = json_encode($result);
-			echo $result;
-			wp_die();
+		}
+
+		if ($_POST['product_id']) {
+			$product_id = $_POST['product_id'];
+		} else {
+			$product_id = wc_get_product_id_by_sku($_POST['product_sku']);
+		}
+		
+		$result['product_price'] = strip_tags(wc_price(get_post_meta($product_id,'_price',true)));
+		$result['product_quantity'] = (isset($_POST['quantity']))?$_POST['quantity']:'';
+		$result['product_id'] = $product_id;
+		$result['product_sku'] = get_post_meta($product_id,'_sku',true);
+		$product_post = get_post($product_id);
+		$result['product_title'] = $product_post->post_title;
+		$result['product_url'] = get_permalink($product_id);
+		$result = json_encode($result);
+		echo $result;
+		wp_die();
 	}
 
 	/**
